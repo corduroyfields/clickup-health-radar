@@ -187,6 +187,47 @@ BETA_TASKS = [
 ]
 
 
+# A deliberately HEALTHY account — the calibration control. If the Radar
+# can't say GREEN here, the rubric (or the model) needs work.
+GAMMA_TASKS = [
+    {
+        "name": "Monthly sync with Gamma stakeholders",
+        "description": "June sync held; no open issues. Client happy with rollout pace.",
+        "status": "complete",
+        "priority": 3,
+        "due_date": days_from_now(-5),
+    },
+    {
+        "name": "Publish Gamma Q2 value report",
+        "description": "Delivered to their VP Ops; positive feedback received.",
+        "status": "complete",
+        "priority": 3,
+        "due_date": days_from_now(-12),
+    },
+    {
+        "name": "Rotate Gamma integration credentials",
+        "description": "Routine quarterly credential rotation.",
+        "status": "to do",
+        "priority": 3,
+        "due_date": days_from_now(10),
+    },
+    {
+        "name": "Plan Gamma Q3 roadmap workshop",
+        "description": "Half-day workshop; agenda drafting underway.",
+        "status": "to do",
+        "priority": 3,
+        "due_date": days_from_now(14),
+    },
+    {
+        "name": "Refresh Gamma runbook documentation",
+        "description": "Routine doc pass after the June feature release.",
+        "status": "to do",
+        "priority": 4,
+        "due_date": days_from_now(21),
+    },
+]
+
+
 def main() -> None:
     delete_space_if_exists("Client Accounts")
     space_id = create_space("Client Accounts")
@@ -199,8 +240,12 @@ def main() -> None:
     for task in BETA_TASKS:
         create_task(beta_id, task)
 
+    gamma_id = create_list(space_id, "Gamma LLC Steady State")
+    for task in GAMMA_TASKS:
+        create_task(gamma_id, task)
+
     print("\nDone. Open ClickUp in your browser to see the new Space.")
-    print(f"List IDs -> Acme: {acme_id}   Beta: {beta_id}")
+    print("(No need to note List IDs — the radar discovers lists at runtime now.)")
 
 
 if __name__ == "__main__":
