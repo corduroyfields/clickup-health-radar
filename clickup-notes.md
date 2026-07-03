@@ -67,6 +67,12 @@ risk synthesized three separate tasks into one narrative — real analysis.
   yet). LLMs optimize for looking thorough; an explicit "return an empty
   risks list if there are none" instruction is the lever. Kept unfixed as a
   human-in-the-loop exhibit.
+  - **Counterpoint (Josh):** the Gamma flag is defensible — security tasks
+    punish lateness disproportionately (sick leave, vendor slippage), and 10
+    days isn't much runway. So "manufactured concern" vs "prudent foresight"
+    is itself a judgment call: evaluating AI output means grading against a
+    *chosen risk posture*, not against objective truth. Reasonable seniors
+    disagree with each other here, not just with the model.
 - **Fabrication vs judgment is a blurry line.** "SSO is foundational to
   enterprise onboarding" isn't in our data — it's the model's domain prior,
   true and usefully applied. You can't suppress priors; you can only force
