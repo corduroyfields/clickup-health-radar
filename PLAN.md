@@ -13,7 +13,7 @@ an authentic observation, not when it's polished.
 | Phase | Scope | Status |
 |---|---|---|
 | 0–2 (done) | GCP setup, seeded workspace, radar v1 free-text, radar v2 structured output, calibration control | ✅ Complete |
-| 1 | ClickUp-native AI: Brain + Super Agents on the same data | 🔜 In progress (Josh's browser homework assigned) |
+| 1 | ClickUp-native AI: Brain + Super Agents on the same data | ✅ Complete (Brain + Sentinel Sam agent run on Beta & Gamma; three-system comparison in notes) |
 | 2 | Claude + official ClickUp MCP server; orchestration comparison | ⬜ Not started |
 | 3 | GCP productionization (Secret Manager, Cloud Run, Scheduler, BigQuery) + final capture/retro | ⬜ Not started |
 

@@ -78,5 +78,43 @@ native AI on identical data" — a comparison almost no other candidate has.
 
 ## Handoff to next phase (fill in at phase end)
 - Key learnings:
+  - Trial includes the full AI product ("Brain" chat + "Agents"; the plan's
+    "Super Agents / Autopilot" names had already drifted).
+  - Head-to-head done on Beta AND Gamma, plus a Super Agent ("Sentinel
+    Sam") built and run on both. All verbatim outputs + full three-system
+    comparison live in `clickup-notes.md` ("Phase 1" section).
+  - The money result: on Gamma, Brain chat said YELLOW, but the agent —
+    whose default template literally contains "don't invent problems" —
+    said clean GREEN. Vendor-side proof of our "models abhor an empty
+    risks list" finding AND of the fix we deliberately left unapplied.
+    The prompt is the risk posture.
+  - Sharpest control contrast: agent instructions are readable but NOT
+    editable (and shipped with broken template blanks we couldn't fix);
+    the one deep knob is model choice (incl. Claude Opus 4.8). Radar2's
+    advantage is the contract (schema, rubric, git); ClickUp's is the data
+    position (full data model — it caught zero-assignees, which our
+    assignee-blind export structurally couldn't see).
+  - Governance is opt-out, not opt-in: agent went live in ~60s with no
+    questions; real controls (access scope, trigger allowlist, tools,
+    memory toggles — memory ON by default) exist but only post-hoc.
+  - Agent output rides the normal comment + email notification pipeline —
+    attributed, timestamped, and a potential inbox flood if wired to a
+    noisy automation trigger.
 - Decisions made:
+  - Radar code untouched all phase (stable baseline preserved).
+  - Kept radar2's empty-risks lever unfixed; the vendor template now
+    serves as the "after" exhibit.
+  - Captured agent outputs verbatim from Gmail notification emails (they
+    double as an audit artifact).
 - Open questions carried forward:
+  - Agents' in-app Activity log: never inspected — is there a real audit
+    trail beyond comments/emails? (Check during Phase 2 if convenient.)
+  - Reproducibility of agent output (n=1 per account); does the
+    self-invented "14+ days = stalling" threshold drift between runs?
+  - Untried: scheduled agent runs (their one-button version of our Phase 3
+    plan), the other two catalog agents (Client Liaison, Process
+    Architect), and swapping the agent's model to Claude for a
+    Gemini-vs-Claude same-data comparison.
+  - Setup-quality dependence unprobed: our lists are clean; a messy
+    real-world workspace would likely degrade all three systems
+    differently.
