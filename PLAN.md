@@ -15,7 +15,7 @@ an authentic observation, not when it's polished.
 | 0–2 (done) | GCP setup, seeded workspace, radar v1 free-text, radar v2 structured output, calibration control | ✅ Complete |
 | 1 | ClickUp-native AI: Brain + Super Agents on the same data | ✅ Complete (Brain + Sentinel Sam agent run on Beta & Gamma; three-system comparison in notes) |
 | 2 | Claude + official ClickUp MCP server; orchestration comparison | ✅ Complete (3 experiments + cross-checks; orchestration verdict + Miro paragraph in notes) |
-| 3 | GCP productionization (Secret Manager, Cloud Run, Scheduler, BigQuery) + final capture/retro | ⬜ Not started |
+| 3 | GCP productionization (Secret Manager, Cloud Run, Scheduler, BigQuery) + final capture/retro | ✅ Complete (all modules A–E + wrap-up; radar runs unattended weekdays 8am ET; GCP kept live for remaining interview stages) |
 
 ## Phase files (detailed actions live there)
 

@@ -124,5 +124,38 @@ Document whichever way it goes.
 Wrap-up module complete. Everything else is optional by design.
 
 ## Handoff (fill in at project end)
-- Key learnings:
+- Key learnings (full detail in `clickup-notes.md` Phase 3 + Closing
+  synthesis; distilled for interviews in `interview-summary.md`):
+  - All five optional modules landed with authentic observations. The
+    productionization arc (Secret Manager → Cloud Run → Scheduler →
+    BigQuery) proved the identity thesis from phase 2's handoff: same
+    code, three identities (Josh's ADC → radar-sweep robot → scheduler's
+    OAuth-as-robot), with IAM friction deferred until the first
+    non-owner identity needed access.
+  - The measurement table changed the project's epistemics: verdict
+    jitter became a query result, and the Module E prompt fix became a
+    measured A/B (healthy account 3 fabricated risks → 0; troubled
+    accounts unchanged 4/4). Best finding: variance peaks at the rubric
+    boundary — never alert on a single run's color.
+  - New schema insight: required fields FORCE content into existence
+    (required next_action → manufactured action at GREEN). Schema is a
+    two-edged lever: require support → suppress fabrication; require
+    content → compel it.
+  - Governance thread concluded: opt-out defaults everywhere (five
+    service agents auto-created by API enablement; default compute SA
+    holds Editor). The human review moments were supplied by our
+    process, never by any platform.
 - What would we do differently next project:
+  - Seed the calibration control (the "healthy account") on day one —
+    it produced more findings than both troubled accounts combined.
+  - Build the measurement table BEFORE the experiments, not after —
+    instrumentation turned arguments into queries for pennies.
+  - Write each friction note the moment it happens (the notes file is
+    the deliverable; freshness is its value).
+- End state (2026-07-09): project COMPLETE. GCP deliberately kept live
+  (≥2 interview stages remain; teardown decision deferred). Radar fires
+  weekdays 8am ET and appends to BigQuery. Anticipated epilogue: the
+  ClickUp Enterprise trial will expire and the unattended job will start
+  logging 401s — itself a worthwhile observation (how an agent fails
+  when its upstream dies). Parked idea: a front-end over the BigQuery
+  table. Retro article: `~/knowledge/projects/clickup-health-radar.md`.

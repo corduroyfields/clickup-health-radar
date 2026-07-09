@@ -986,6 +986,117 @@ different reads from the same code: GREEN + 1 manufactured risk (Phase 0–2,
   anchors AI recommendation. Also, a cosmetic first: a typo ("anda") in
   Beta's justification — structured output guarantees shape, not spelling.
 
+## Closing synthesis (Module W)
+
+### Adoption: crawl-walk-run for a skeptical strategic account
+
+The pitch order that this project's own evidence supports — each stage
+exists to earn the next one, and skipping stages is how AI rollouts die.
+
+- **Crawl — read-only, human-published.** Start where setup cost is zero:
+  Brain chat questions asked by the TAM in-session, or a radar-style
+  assessment run by hand — AI reads the workspace, the human reads the
+  AI, and nothing reaches the client unreviewed. The honest surprise of
+  this stage: the first thing AI assessment grades is *your own
+  workspace hygiene*, not your client's health. Day one broke on a
+  half-configured Space; Brain's sharpest Gamma observation was "only 5
+  tasks feels thin — is work happening off-platform?"; every system
+  flagged zero assignees. The crawl-stage win to sell: an AI hygiene
+  audit ("what would an AI see if it looked at our tracker?") — cheap,
+  safe, and it fixes the data every later stage depends on.
+- **Walk — scheduled, read-only, with an audit trail.** The same
+  analysis, now unattended (a Sentinel-Sam-style scheduled agent, or
+  the Cloud Run + Scheduler radar), with output landing somewhere
+  timestamped and attributed (task comments + email; BigQuery rows).
+  This is the stage where the governance conversation actually happens,
+  and the checklist comes straight from our friction log: who reviewed
+  the agent's instructions (readable ≠ editable); what the memory and
+  data-access defaults are; which model; notification hygiene (a
+  mention-trigger emails once — an every-status-change automation is an
+  inbox flood); and alert design that respects boundary jitter — never
+  page on a single run's color, require consecutive changes or
+  majority-of-N.
+- **Run — writes, with a human gate.** AI creates and updates tasks
+  (escalations, follow-ups) behind review-before-send — and the review
+  covers *content*, not just the act: a write-enabled model composes
+  descriptions, not just mutations. Two rules our own runs earned:
+  always make the AI assign an owner (unowned tasks are the natural
+  output of automated creation — we reproduced the exact accountability
+  gap every system flags), and watch the echo-loop (our radar cited an
+  AI-authored task as evidence within one cycle; keep humans in the
+  citation chain).
+
+Crawl proves the data, walk proves the calibration, run is only safe
+once both hold. A skeptical account isn't wrong to be skeptical — the
+skepticism is the correct posture for stages they haven't verified yet.
+
+### Where it shines
+
+- **Cross-task synthesis:** Beta's "value erosion" narrative assembled
+  from three unrelated tasks; the champion-departure story pulled out of
+  a task description. This is analysis a checklist can't do.
+- **Genuine judgment:** escalate-to-exec-sponsor when chases fail;
+  "none of it matters if you can't get in the room." TAM-caliber moves,
+  not present in the data.
+- **Consistency at scale:** every account, every morning, same rubric,
+  for pennies — the sweep a human team does only for its noisiest
+  accounts, done for all of them.
+- **Hygiene made visible:** zero assignees, thin lists, stale work —
+  the AI can't be polite about the tracker, and that's a feature.
+- **Structure compounds:** schema-enforced output became BigQuery rows
+  became trend queries became a measured prompt A/B. Free text caps out
+  at "nice paragraph"; structure keeps paying.
+
+### Where clients get stuck
+
+- **The workspace itself.** Half-configured statuses, unassigned tasks,
+  work living off-platform. The AI is only as good as the tracker's
+  honesty, and most trackers flatter themselves.
+- **Scope ambiguity.** Brain's answer changes with cursor position; the
+  same words ("this engagement") silently mean different things. Users
+  don't notice they asked a different question than they think.
+- **Trust calibration.** Pre-lever, our alarm always fired (GREEN with
+  3 "risks"); an alarm that always fires gets ignored. And the fix is a
+  *chosen risk posture*, not a settings toggle — someone has to own
+  that choice.
+- **Governance surprises.** Agents go live in 60 seconds with memory on
+  by default; OAuth grants a 51-tool surface including delete with no
+  scope screen; agent instructions are readable but not editable. None
+  of these are blockers — all of them are conversations a client
+  discovers mid-rollout instead of before it.
+- **The auth chain.** Every "connect X to your AI" is really a chain of
+  identities (user OAuth, service accounts, tokens), and each link is
+  where a less-technical team stalls. Per-user OAuth vs unattended
+  service identity is a real architectural fork, not a detail.
+- **The last mile.** The radar can say "call the champion today." It
+  cannot call the champion. Value realization still ends with a human
+  doing the human part — the tool moves *when* they know, not *whether*
+  they act.
+
+### The limits — where the human stays in the loop
+
+1. **Contested judgment.** Module E's residual YELLOW(1): strip away
+   all the padding and the model still splits with itself on whether a
+   4-days-out security task is a risk — exactly where reasonable
+   seniors also split. Risk posture is chosen, not computed.
+2. **Boundary jitter.** Same data, same code, different color five
+   minutes apart when an account sits on a rubric line. Single-run
+   verdicts near thresholds are coin flips; a human (or hysteresis)
+   arbitrates.
+3. **Fabrication pressure.** Required fields compel content into
+   existence; domain priors can't be suppressed, only forced to cite
+   evidence. The prompt lever works — and it took an instrumented A/B
+   to *know* it works rather than believe it.
+4. **Echo loops.** AI output became AI input in one cycle, with the
+   human dropping out of the citation chain. Scheduled runs re-ingest
+   AI-authored content daily.
+5. **The vendor in the loop.** Tool descriptions steer model behavior,
+   embed governance, and once simply lied ("me" assignee). A third
+   author you don't control writes prose inside your orchestration.
+6. **Arithmetic.** Date math stays in code. Every system that let the
+   model count days got it right *most* of the time — "most" is the
+   problem.
+
 ## Design patterns worth repeating
 
 - **Python does math, the model does judgment.** We pre-compute "overdue by
@@ -999,11 +1110,14 @@ different reads from the same code: GREEN + 1 manufactured risk (Phase 0–2,
 - **Vertex (`vertexai=True`) over a raw API key:** auth rides on ADC, usage
   bills to the project, nothing secret in the code — the enterprise pattern.
 
-## Still to explore
-- Structured JSON output via Gemini response schema (fix the parsing problem).
-- A healthy account test case (calibration).
-- ClickUp Brain / Super Agents on the same data (Enterprise trial) — compare
-  to roll-your-own.
-- ClickUp official MCP server from Claude Code — compare to Miro MCP
-  experience.
-- Cloud Run + Scheduler (make it a daily radar, not a manual script).
+## Explored (originally "Still to explore" — every item landed)
+- ~~Structured JSON output via Gemini response schema~~ → radar2, and it
+  became the BigQuery DDL.
+- ~~A healthy account test case (calibration)~~ → Gamma, which turned into
+  the project's single richest vein of findings.
+- ~~ClickUp Brain / Super Agents on the same data~~ → Phase 1, three-system
+  comparison.
+- ~~ClickUp official MCP server from Claude Code~~ → Phase 2, four-system
+  comparison + orchestration verdict.
+- ~~Cloud Run + Scheduler~~ → Phase 3; fires weekdays 8am ET, unattended,
+  writing trend rows.
