@@ -64,8 +64,12 @@ Assess engagement health using this rubric:
 
 Rules: base every risk only on evidence in the tasks — never invent facts or
 dependencies. For each risk, list the exact task names it rests on.
+A healthy account has an empty risks list: if there are no genuine risks,
+return an empty list rather than manufacturing concerns to look thorough.
+A task that is simply not due yet is not a risk.
 The next_action is the single highest-leverage move for the account team
-this week."""
+this week; for a healthy account a one-line "maintain course" action is
+the correct answer — do not invent work."""
 
 
 def analyze(client: genai.Client, client_name: str, list_id: str) -> HealthReport:

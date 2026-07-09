@@ -907,6 +907,54 @@ needed before the ergonomics judgment means much.
   (<1¢/month at our volume) — flagged per the cost rule, and a good
   example of reading the pricing page before enabling things.
 
+### Module E — the empty-risks lever, instrumented (2026-07-09)
+
+The experiment Phase 0–2 deliberately deferred, now run as a measured A/B
+with the BigQuery table as the instrument. Change: three prompt lines
+(an empty risks list is valid; a task that isn't due yet is not a risk;
+"maintain course" is a legitimate next_action for a healthy account).
+Single variable — the rubric's known RED/YELLOW overlap was left alone.
+
+Result (Gamma, 4-day credential runway, i.e. sitting ON the boundary):
+
+| | health | risk_count |
+|---|---|---|
+| pre-change (13:21, 13:26) | YELLOW, GREEN | 3, 3 |
+| post-change (14:35→14:43, 4 runs) | YELLOW, GREEN, GREEN, GREEN | **1, 0, 0, 0** |
+
+- **Padding: eliminated.** The three 0-risk rows are the first empty
+  risks lists in the project's history across ALL systems (radar2
+  padded, Brain went yellow, even Sentinel Sam kept a watchout).
+  next_action degraded gracefully to honest maintain-course phrasing.
+  risk_count is a meaningful signal again — the day before, GREEN(3)
+  sat next to RED(3) on the dashboard.
+- **The residual YELLOW(1) is the finding, not a failure.** With the
+  padding stripped, the variance that remains is pure risk posture:
+  1 run in 4 still judged the 4-days-out security task a genuine risk.
+  The lever removed the fabricated noise and exposed the irreducible
+  judgment call underneath — the model now disagrees with itself only
+  where reasonable seniors also disagree (Josh's v2 counterpoint,
+  vindicated by ablation). Prompts kill padding; they don't settle
+  contested judgment. That still takes hysteresis/majority-of-N — or
+  a human.
+- **Control arm clean:** Acme RED(3)×4, Beta RED(3)×4 — fabrication
+  suppressed, detection untouched. (And the troubled accounts' counts,
+  which had wobbled 2–3 between earlier runs, went four-for-four
+  identical post-change — weak-but-suggestive evidence that padding
+  discretion was itself a jitter source.)
+- **Vendor convergence, measured:** ClickUp's agent template bet on
+  exactly this instruction ("don't invent problems"). We reproduced
+  their result in our system — with SQL receipts instead of a vibe.
+- **Friction: the project's first rate limit.** Running three sweeps
+  back-to-back hit Vertex's 429 RESOURCE_EXHAUSTED — the SDK
+  (tenacity) auto-retried with backoff before surfacing it. Production
+  cadence (one run/day) could never trigger it; the burst was the
+  experimenter, not the product — load patterns from a test harness
+  don't resemble the system's real life. The crash also validated a
+  design accident worth keeping: store_reports runs last, so an
+  aborted sweep writes zero rows — runs are all-or-nothing in the
+  table.
+
 ### Free calibration data: Gamma's third radar2 verdict (same day!)
 
 The Module A test run re-ran the radar, and Gamma has now produced three
