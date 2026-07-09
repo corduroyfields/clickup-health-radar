@@ -869,6 +869,43 @@ needed before the ergonomics judgment means much.
 - Wiring facts for reference: `0 8 * * 1-5` America/New_York; scheduler
   reuses the `radar-sweep` robot via short-lived OAuth token (no stored
   key anywhere in the chain).
+- **Confirmed the next morning (2026-07-09):** execution created
+  12:00:18 UTC — 18 seconds past the scheduled 8:00 AM ET — run by the
+  robot, completed, laptop closed. First fully unattended sweep; the
+  "agentic" claim is now literal.
+
+### Module D — BigQuery trend history (2026-07-09)
+
+- **The whole chain went clean first try** (dataset → table → IAM →
+  local insert → redeploy → cloud insert). The table schema is the
+  pydantic `HealthReport` translated 1:1 into a column list — the
+  contract we imposed on Gemini turned out to *be* the DDL. That's the
+  structured-output payoff made physical: free text could never have
+  become rows, let alone rows whose columns were designed months
+  before the table existed.
+- **Six rows in, the table had already caught the headline finding:**
+  Gamma YELLOW at 13:21:15 (laptop run), GREEN at 13:26:51 (cloud run).
+  Same data, same code, same rubric, 5.5 minutes apart. The
+  reproducibility asterisk is now a SQL result, not an anecdote — and
+  any stakeholder shown this table would immediately ask the right
+  question ("which one do I believe?"), which is the human-in-the-loop
+  conversation in miniature.
+- **Refinement of the jitter finding: variance peaks at the rubric
+  boundary.** Gamma's full history: ~10d credential runway → GREEN;
+  5d → YELLOW and GREEN in the same day; 4d → YELLOW and GREEN five
+  minutes apart. The account sits ON the GREEN/YELLOW decision line and
+  sampling noise is the tiebreaker — classic classifier behavior
+  (confidence is lowest at the boundary). Design implication for a real
+  product: don't alert on a single run's color; use a majority-of-N or
+  only alert on *consecutive* changes (hysteresis). Module E can now be
+  instrumented: the table measures whether the empty-risks lever
+  stabilizes the boundary.
+- **Design choice worth defending in interview:** the BigQuery write is
+  wrapped in try/except — monitoring should degrade, not die; a
+  warehouse hiccup must not cost you the morning's health report.
+  Also: streaming inserts are the one non-free-tier item of the phase
+  (<1¢/month at our volume) — flagged per the cost rule, and a good
+  example of reading the pricing page before enabling things.
 
 ### Free calibration data: Gamma's third radar2 verdict (same day!)
 

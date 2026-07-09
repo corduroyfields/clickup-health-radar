@@ -11,6 +11,8 @@ explicit rubric for GREEN / YELLOW / RED instead of leaving it to vibes.
 Run:  uv run python radar2.py
 """
 
+import json
+from datetime import datetime, timezone
 from typing import Literal
 
 from google import genai
@@ -84,6 +86,42 @@ def analyze(client: genai.Client, client_name: str, list_id: str) -> HealthRepor
 
 DOT = {"GREEN": "🟢", "YELLOW": "🟡", "RED": "🔴"}
 
+# Where run history accumulates: project.dataset.table
+BQ_TABLE = f"{GCP_PROJECT}.radar.health_reports"
+
+
+def store_reports(reports: dict[str, "HealthReport"]) -> None:
+    """Append this run's reports to BigQuery — one row per client account.
+
+    This is the structured-output payoff: because every report is a
+    HealthReport (not prose), each one maps 1:1 onto table columns.
+    Free text could never become rows. All reports in a run share one
+    run_time, so SQL can group by run as well as by day.
+    """
+    from google.cloud import bigquery
+
+    bq = bigquery.Client(project=GCP_PROJECT)
+    run_time = datetime.now(timezone.utc).isoformat()
+    rows = [
+        {
+            "run_time": run_time,
+            "client": client_name,
+            "health": r.health,
+            "justification": r.justification,
+            "risk_count": len(r.risks),
+            # risks keep their full structure as a JSON column — queryable
+            # later with JSON functions, without needing more columns now.
+            "risks": json.dumps([risk.model_dump() for risk in r.risks]),
+            "next_action": r.next_action,
+        }
+        for client_name, r in reports.items()
+    ]
+    errors = bq.insert_rows_json(BQ_TABLE, rows)
+    if errors:
+        print(f"(BigQuery: some rows failed: {errors})")
+    else:
+        print(f"(BigQuery: {len(rows)} report row(s) appended to {BQ_TABLE})")
+
 
 def main() -> None:
     client = genai.Client(vertexai=True, project=GCP_PROJECT, location=GCP_LOCATION)
@@ -105,6 +143,13 @@ def main() -> None:
     for client_name, report in reports.items():
         print(f"  {DOT[report.health]} {client_name}: {report.health} "
               f"({len(report.risks)} risk(s))")
+
+    # History is best-effort: a warehouse hiccup shouldn't kill the health
+    # report itself (monitoring must degrade, not die). Failures print loudly.
+    try:
+        store_reports(reports)
+    except Exception as exc:
+        print(f"(BigQuery append SKIPPED — {type(exc).__name__}: {exc})")
 
 
 if __name__ == "__main__":
