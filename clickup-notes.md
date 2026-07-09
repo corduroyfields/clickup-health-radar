@@ -796,6 +796,39 @@ needed before the ergonomics judgment means much.
   flavor: local success proves nothing about what production identities
   are allowed to do.
 
+### Module B — Cloud Run Job (2026-07-08)
+
+- **The IAM policy dump after the role grants was a governance exhibit in
+  itself.** (1) Enabling three APIs (B1) silently created five
+  Google-managed service agents with project-level roles — no
+  confirmation, no announcement; the platform grants its own robots
+  access the same opt-out way ClickUp's agent went live in 60 seconds.
+  (2) The *Compute Engine default service account* sits in every project
+  with `roles/editor` — near-Owner powers — and it's what a Cloud Run
+  job runs as if you don't specify otherwise. The lazy deploy path ships
+  with god-mode credentials; our dedicated `radar-sweep` robot carries
+  exactly two roles (read secrets, call Vertex). Least privilege is a
+  deliberate act; the default is the opposite.
+- **The predicted deploy friction never fired either — and the credit
+  goes to two files.** `gcloud run jobs deploy --source .` (upload →
+  Cloud Build → Artifact Registry → job) went clean first try. The
+  Dockerfile pinned the toolchain and `uv sync --frozen` installed
+  exactly what `uv.lock` said — the cloud build *couldn't* diverge from
+  the laptop. Reproducibility isn't a virtue, it's an artifact: commit
+  the lockfile. (Honest caveat: the IAM friction didn't fire because we
+  granted the roles *before* first run — pre-empted by following the
+  plan, not absent. The PERMISSION_DENIED experience remains untried.)
+- **The identity chain worked unchanged:** first log line is
+  `(ClickUp token: Secret Manager)` — same code, but this time ADC
+  resolved to the `radar-sweep` robot instead of Josh. Auth identity is
+  an environment property, not a code property; that's what ADC buys.
+- **First execution: ~1m35s end-to-end**, `Container called exit(0)`
+  (clean exit = job success; nonzero would mark the execution failed).
+- **Jitter check, cloud edition (same-day run #3):** Acme 3→2 risks
+  (the training risk vanished), Gamma 3→2 (runbook risk vanished),
+  colors stable this time. Counts move on every single run; the
+  finding holds wherever the code runs.
+
 ### Free calibration data: Gamma's third radar2 verdict (same day!)
 
 The Module A test run re-ran the radar, and Gamma has now produced three
