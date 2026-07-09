@@ -1,0 +1,14 @@
+# Files that must NOT be sent to Cloud Build / baked into the image.
+# Most important line in this file: the secret stays out of the container —
+# in the cloud, the radar gets its token from Secret Manager, not a file.
+.env
+
+# Dead weight (the image needs none of this to run):
+.git
+.venv
+__pycache__
+.claude
+*.md
+phases/
+main.py
+seed_workspace.py

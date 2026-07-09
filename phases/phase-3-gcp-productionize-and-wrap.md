@@ -10,7 +10,41 @@ it. Modules are ordered by value-per-hour; stop anywhere. The wrap-up
 
 ## Handoff from previous phase (fill from phase 2 before starting)
 
-- (carry forward phase 2's key learnings)
+Carried forward 2026-07-08 (full detail in `clickup-notes.md`, Phase 2
+section, and in phase 2's handoff):
+
+- **The identity gap is Phase 3's reason to exist.** MCP is per-user OAuth
+  (acts-as-Josh, interactive); an unattended pipeline needs its own
+  credentials — the token+REST pattern radar2 uses. Cloud Run + Scheduler
+  is that niche made real: a service account (robot identity) holding the
+  ClickUp token, no human in the loop. Sentinel Sam's "Scheduled trigger"
+  button is the platform version of the same idea; Module B/C is the
+  roll-your-own version, and the comparison belongs in the notes.
+- **Four-system comparison is done and captured:** radar2 (schema contract,
+  deterministic scope, assignee-blind), Brain chat (full data model,
+  freeform, scope = cursor), Sentinel Sam ("don't invent problems" →
+  cleanest Gamma calibration), MCP-Claude (model-orchestrated, adaptive and
+  unauditable export boundary, self-healed a broken tool contract).
+- **Reproducibility has two asterisks now:** the date is an input (Gamma
+  flipped GREEN→YELLOW on clock alone — verdict = f(data, rubric, clock)),
+  and severities jitter between same-day runs (schema guarantees shape,
+  not judgment). Module D's trend table will make both visible as data:
+  day-over-day color changes need reading with error bars in mind.
+- **Echo-loop on record:** radar recommended escalation → MCP-Claude
+  created the task (86bauv9fq, description synthesized from the radar's
+  own report) → radar now cites it as evidence. That task is live
+  workspace data; scheduled daily runs will keep re-ingesting AI-authored
+  content. Relevant to Module E and the wrap-up's human-in-the-loop story.
+- **Module E's lever is already vendor-validated:** ClickUp's own agent
+  template ships "don't invent problems," and Sam produced the only clean
+  green. Adding the empty-risks instruction to radar2 tests the same lever
+  on our side of the fence.
+- **Workspace state:** experiment 2's escalation task remains in Acme
+  (assigned to Josh — the only assigned task in the Space). Re-seeding
+  would delete it; avoid re-running `seed_workspace.py` unless accepted.
+- **Open questions still carried:** Agents' in-app Activity log never
+  inspected; MCP Docs/Chat/time-tracking tools untried; whether the
+  claude.ai connector exposes the same 51 tools.
 
 ## Preflight (Claude, before any changes)
 

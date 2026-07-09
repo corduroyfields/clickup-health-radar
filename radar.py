@@ -16,18 +16,49 @@ import requests
 from dotenv import load_dotenv
 from google import genai
 
-load_dotenv()
-
-TOKEN = os.environ["CLICKUP_API_TOKEN"]
-HEADERS = {"Authorization": TOKEN}
-BASE_URL = "https://api.clickup.com/api/v2"
-
 TEAM_ID = "90141353314"  # the workspace
 SPACE_NAME = "Client Accounts"
 
 GCP_PROJECT = "clickup-health-radar"
 GCP_LOCATION = "us-central1"
 MODEL = "gemini-2.5-flash"
+
+
+def get_clickup_token() -> str:
+    """Fetch the ClickUp token, preferring Secret Manager over the local .env.
+
+    Order matters for where this code will run:
+      1. GCP Secret Manager — one central copy, guarded by IAM, versioned,
+         every access audit-logged. On the laptop this authenticates via ADC;
+         in Cloud Run it will authenticate as the job's service account.
+         Same code, both places — that's the point.
+      2. .env fallback — keeps the radar runnable offline or on a machine
+         with no GCP credentials at all.
+    """
+    try:
+        from google.cloud import secretmanager
+
+        client = secretmanager.SecretManagerServiceClient()
+        name = f"projects/{GCP_PROJECT}/secrets/clickup-api-token/versions/latest"
+        payload = client.access_secret_version(name=name).payload.data
+        print("(ClickUp token: Secret Manager)")
+        return payload.decode()
+    except Exception as exc:
+        # Whatever went wrong (package missing, no ADC, IAM denied), fall
+        # back to the .env — but say why, so IAM problems aren't invisible.
+        load_dotenv()
+        token = os.environ.get("CLICKUP_API_TOKEN")
+        if token:
+            print(f"(ClickUp token: .env fallback — Secret Manager said: {type(exc).__name__})")
+            return token
+        raise RuntimeError(
+            "No ClickUp token available: Secret Manager failed and .env has no CLICKUP_API_TOKEN"
+        ) from exc
+
+
+TOKEN = get_clickup_token()
+HEADERS = {"Authorization": TOKEN}
+BASE_URL = "https://api.clickup.com/api/v2"
 
 
 def discover_lists() -> dict[str, str]:

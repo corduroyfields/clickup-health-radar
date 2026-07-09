@@ -775,6 +775,58 @@ both sides. Honest caveat: that "equal" verdict rests on limited
 command-line mileage; more reps running MCP work from the terminal are
 needed before the ergonomics judgment means much.
 
+## Phase 3 — productionizing on GCP
+
+### Module A — Secret Manager (2026-07-08)
+
+- **Migration cost: four commands and one function.** Token piped from
+  `.env` into `gcloud secrets create` (never on screen), verified by length
+  only; code now tries Secret Manager (via ADC) and falls back to `.env`
+  with a printed reason. Same code path will authenticate as a service
+  account in Cloud Run — that portability is the whole argument for
+  moving the secret now, before the container exists.
+- **The predicted IAM friction never fired — and that's the finding.**
+  `gcloud secrets create` and the length-check accessor both passed first
+  try, no `secretAccessor` grant needed. Why: Josh's account is project
+  *Owner*, and owner status implicitly carries nearly every permission —
+  so on your own project, IAM is invisible. The friction isn't absent,
+  it's *deferred* to the first non-owner identity that needs the secret
+  (Module B's service account, which starts with zero permissions and
+  must be granted access explicitly). "Works on my machine" has an IAM
+  flavor: local success proves nothing about what production identities
+  are allowed to do.
+
+### Free calibration data: Gamma's third radar2 verdict (same day!)
+
+The Module A test run re-ran the radar, and Gamma has now produced three
+different reads from the same code: GREEN + 1 manufactured risk (Phase 0–2,
+~10d runway) → YELLOW (Phase 2 cross-check, 5d runway) → **GREEN + 3 risks
+(TODAY, hours after the YELLOW run, same data, same clock)**. Findings:
+
+- **The top-line color itself jitters, not just severities.** Phase 2's
+  asterisk ("schema guarantees shape, not judgment") understated it: the
+  headline verdict flipped YELLOW→GREEN between same-day runs. Any
+  consumer of this radar needs to know the color has error bars — or the
+  rubric needs hardening (Module E material).
+- **Risk-count inflation makes the dashboard lie.** "🟢 GREEN (3 risk(s))"
+  now sits next to "🔴 RED (3 risk(s))" — identical risk counts for the
+  healthiest and sickest accounts. The count is noise; only severity ×
+  evidence means anything. Gamma's three "risks" include a not-yet-due
+  workshop and a low-priority runbook refresh — pure list-padding.
+- **New schema insight: required fields FORCE content into existence.**
+  Phase 0–2 found that requiring `evidence_tasks` killed a hallucination.
+  This run shows the same mechanism running in reverse: `next_action` is
+  required, so a healthy account still gets a manufactured action
+  ("ensure the credential task is actively being worked on" — i.e.,
+  nothing). Schema design is a two-edged lever: require *support* and you
+  suppress fabrication; require *content* and you compel it. An optional
+  `next_action` (or "empty risks list is valid" instruction) is the fix —
+  deliberately deferred to Module E.
+- **The echo-loop persists:** Acme's NEXT ACTION is again the AI-authored
+  escalation task (86bauv9fq) — third consecutive run where AI output
+  anchors AI recommendation. Also, a cosmetic first: a typo ("anda") in
+  Beta's justification — structured output guarantees shape, not spelling.
+
 ## Design patterns worth repeating
 
 - **Python does math, the model does judgment.** We pre-compute "overdue by
