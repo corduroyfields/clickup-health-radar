@@ -451,6 +451,330 @@ genuinely better."
 > If the account looks healthy, say so in one line and move on. Don't
 > invent problems.
 
+## Phase 2 — Claude + the official ClickUp MCP server
+
+### Connection log (2026-07-08)
+
+- **Connected to the official server** (`https://mcp.clickup.com/mcp`,
+  HTTP transport) via `claude mcp add`, saved at **local scope** — i.e.
+  keyed to this project folder only. OAuth completed on the first try;
+  no retries, no token errors. Smooth.
+- **Setup friction was all on the Claude side, not ClickUp's.** The
+  desktop app doesn't ship a terminal `claude` command (its bundled copy
+  is a private app bundle), so step zero was installing the standalone
+  CLI via the native installer. Then TWO auth layers before any ClickUp
+  data flows: (1) CLI → Anthropic account login, (2) `/mcp` → ClickUp
+  OAuth. Contrast with Miro, which was already wired in as a claude.ai
+  connector with zero terminal setup. Lesson for the integration story:
+  "connect X to your AI" is really an auth *chain*, and each link is a
+  place a less technical user stalls.
+- **OAuth consent screen: a workspace picker and nothing else.** Already
+  signed into ClickUp in the browser, so the whole grant was one click:
+  choose which workspace, done. **No scope/permission list was shown** —
+  no read-vs-write distinction, no object-level choices, no way to
+  narrow the grant below "the workspace." The absence is the datapoint:
+  we went looking for the consent-BEFORE governance moment (vs Sentinel
+  Sam's inspect-AFTER model from Phase 1) and found that the consent
+  screen exists but carries near-zero information — you authorize a
+  51-tool read/write surface without being told that's what it is. An
+  enterprise admin evaluating this would have to get the effective
+  permission list from documentation (or from `/mcp` after connecting),
+  not from the grant screen. Frictionless for the user, thin for
+  governance — the same trade Phase 1 found on the agent side.
+- **51 tools.** That's the headline number from `/mcp`: the ClickUp
+  server exposes 51 tools — for comparison, in the same session Miro's
+  connector exposes 36, Notion's 20, Gmail's 13. Two immediate
+  observations:
+  - Tool definitions occupy the model's context window like anything
+    else; a 51-tool surface is a real prompt-space cost before the
+    first request is even typed.
+  - Tool-selection risk scales with the menu. With 51 options, "did the
+    model pick the right tool?" (the thing experiment 1 watches for)
+    is a genuinely harder problem than with a 6-tool allowlist like
+    Sentinel Sam's. Bigger surface = more capable and more fallible.
+  - (Tool names/granularity to be captured from the interactive session
+    during the experiments.)
+- **Local scope has a nice side effect:** because the server was saved to
+  the project folder's config, EVERY Claude session launched from this
+  folder now sees it — the desktop session picked up the 51 tools without
+  any extra setup. Config-by-directory is the mechanism.
+
+### The 51-tool surface, mapped (2026-07-08)
+
+Ten clusters: task CRUD (incl. `delete_task`, `merge_tasks`), task
+discovery (`search`, `filter_tasks`, `get_workspace_hierarchy`), task
+relationships (dependencies/links/tags), comments + attachments, Chat
+(read AND `send_chat_message`), Docs (create/update pages), people
+(`get_workspace_members`, `resolve_assignees`), time tracking, flow
+analytics (`get_task_time_in_status` + bulk variant), workspace admin
+(folders/lists/custom fields/reminders).
+
+- **It's a designed product, not a generated API wrapper.** The tells:
+  `resolve_assignees` / `find_member_by_name` exist only because models
+  talk in human names while the API demands numeric IDs; and
+  `get_bulk_tasks_time_in_status` pre-computes an aggregate so the model
+  doesn't do arithmetic. ClickUp's MCP team independently arrived at our
+  "Python does math, the model does judgment" pattern — the glue tools
+  are where you can see it.
+- **What's ABSENT answers a Phase 1 open question:** no Brain, no
+  Agents, no Automations, no Goals, no Whiteboards. MCP exposes the data
+  plane, not the AI/automation plane — external AI (us) and their AI
+  (Sentinel Sam) are parallel tracks that can't drive each other.
+- **Governance kicker:** the one-click, no-scope-list OAuth grant
+  included `delete_task` and `send_chat_message`. The consent screen
+  never surfaced that an AI was being given delete rights and a voice in
+  team chat. Our phase rule (no destructive actions without explicit
+  go-ahead) is supplying the governance the platform didn't.
+- **No bulk-write tools** — bulk read analytics exists, but writes are
+  one-task-at-a-time. Caps the blast radius of a misfiring agent,
+  intentionally or not.
+- **Value framing (interview-ready):** read tools make ClickUp data
+  AI-legible (the radar2 use case with zero code); write tools make it
+  AI-actionable (insight → intervention in one conversation); glue tools
+  are the ergonomic layer that makes the first two reliable.
+
+### Experiment 2 — write (Acme escalation task) (2026-07-08)
+
+Created via MCP: "Send SSO escalation email to Acme exec sponsor",
+urgent, due Jul 10, in Acme Corp Onboarding → task `86bauv9fq`,
+one-shot success, URL returned. Two calls again (`get_list` → 
+`create_task`). Observations:
+
+- **Reads resolve names; writes demand IDs.** `get_list` happily takes
+  a list *name*, but `create_task` requires a numeric `list_id`.
+  Sensible asymmetry: fuzzy matching is fine when the worst case is a
+  wrong answer, not fine when the worst case is a mutation landing in
+  the wrong place. Precision requirements scale with blast radius —
+  a pattern worth quoting.
+- **Same asymmetry in dates:** writes accept human `YYYY-MM-DD`; reads
+  return epoch milliseconds. Generous input, lazy output.
+- **ClickUp embeds human-in-the-loop instructions INSIDE the tool
+  schema.** `create_task`'s field descriptions literally say "always
+  ask the user which list" and "Ask the user what they want to name
+  the task." The vendor is prompt-injecting governance into every MCP
+  host's orchestration loop — consent-at-the-moment-of-action, exactly
+  what the OAuth screen didn't provide. (Satisfied here: Josh approved
+  the exact task before creation per our phase rule.)
+- **The model authored unrequested content.** The phase spec dictated
+  name/priority/due date; the task *description* (SAML metadata
+  context, Jul 12 go-live tie-in, exec-help ask) was model-written,
+  synthesized from radar2's report earlier in the session. Useful — 
+  and it means a write-enabled model doesn't just execute writes, it
+  *composes* them. Review-before-send matters for content, not just
+  for the act of writing.
+- **First tool failure of the phase — and it's a documentation bug, not
+  a model miss.** Assigning the task: `update_task`'s own description
+  says it supports assignees as "user IDs, emails, usernames, or
+  'me'"… and passing `"me"` returned `Assignees list invalid`. The
+  model did exactly what the vendor's docs said and got an error;
+  recovery required falling back to `resolve_assignees` ("me" →
+  numeric ID) + retry. Three lessons: (1) tool descriptions are
+  load-bearing prompt engineering, so when they overpromise, the
+  *model* looks unreliable — description-vs-implementation drift is a
+  new API-contract failure mode; (2) self-healing worked — the model
+  recovered in one extra round-trip without human help, which is the
+  actual value-add of model orchestration (radar2 would have crashed);
+  (3) this is the phase file's predicted "tool-selection miss," except
+  the model selected *correctly per the docs* — the docs were wrong.
+- **Josh's UI check caught it: the task has no assignee.** Nobody told
+  the AI to assign an owner, so it didn't — we just reproduced the
+  exact accountability gap every system in this project flags, via AI
+  write. Unowned tasks aren't only a messy-workspace symptom; they're
+  the *natural output of automated task creation* (our seed script,
+  and now MCP-Claude, both). Any org adopting AI task creation should
+  expect its zero-assignee count to climb unless "always assign an
+  owner" is baked into the instructions — the same lesson as "return
+  an empty risks list if none," but on the write side.
+
+Radar re-run after the write (same day) — two findings:
+
+- **The loop closed, but the phase file's prediction was falsified in
+  an interesting direction.** Predicted: the new urgent task "should
+  raise Acme's risk picture." Actual: still RED / 3 risks — the radar
+  read the escalation task SEMANTICALLY, folding it into the SSO risk
+  as evidence and making "complete the escalation email" its NEXT
+  ACTION. It judged the task by content (escalation = remedy underway),
+  not metadata (another urgent item due in 2 days). Bonus irony: radar
+  recommended escalation → MCP-Claude created the task, description
+  written from the radar's own report → radar now cites that
+  AI-authored task as evidence and recommends executing it. **AI output
+  became AI input in one cycle.** At scale, that's an echo-chamber
+  failure mode: models validating work that models generated, with the
+  human increasingly out of the citation chain.
+- **Free nondeterminism experiment:** between the two same-day runs,
+  Beta and Gamma inputs were UNCHANGED — yet Beta went 4 risks → 3
+  (regrouped), legacy import HIGH → MEDIUM, Gamma workshop MEDIUM →
+  LOW, and a new Acme training LOW appeared. Second asterisk on
+  radar2's reproducibility claim (first was the clock): **the schema
+  guarantees shape, not judgment** — severities and groupings jitter
+  with sampling randomness. Same day, same data, different risk
+  counts. If a customer dashboards these severities, they need to know
+  the error bars exist.
+
+### Experiment 3 — judgment ("which account needs attention most this week?") (2026-07-08)
+
+MCP-Claude's answer: **Beta first**, Acme close second, Gamma a watch
+item. Reasoning: Acme is acute but *diagnosed with remedy in motion*
+(SSO blocker known, escalation task in flight, due Jul 10); Beta is a
+structural void — renewal in 6 weeks, champion gone since May, NO
+replacement contact, tickets 18 vs usual 5, adoption 41/100 licenses
+and falling. Relationship rebuilding has the longest lead time on the
+board, so it gets the week.
+
+- **Convergence:** Brain (Phase 1, space-level) also said Beta first,
+  nearly verbatim ("drop everything and schedule that renewal call").
+  Two different model-orchestrated systems, same portfolio call.
+- **radar2 declines to rank — and that's the exhibit.** Its dashboard
+  shows 🔴🔴🟡 with risk counts, but cross-account prioritization was
+  never in its schema, so the question is literally unanswerable
+  without a code change. The schema contract cuts both ways: output
+  can't be malformed, AND questions outside the schema can't be asked.
+  Model orchestration buys flexibility; the contract is the price.
+- **Orchestration: 5 calls** (1 space-wide `filter_tasks` with
+  include_closed=true + 4 targeted `get_task` description fetches).
+  Notably, this plan APPLIED EXPERIMENT 1'S LESSON unprompted (closed
+  tasks + descriptions, having missed the champion story before). The
+  model-orchestrated export boundary adapts between runs; radar2's
+  can't change without a commit. Same property, two names: "learning"
+  and "unauditable drift."
+- Small but telling: in the space sweep, the only assigned task in the
+  entire Space is the one MCP-Claude created and Josh had it assign —
+  every seeded task is ownerless. The workspace's accountability gap
+  is now visible in one field scan.
+
+### Experiment 1 — read (Beta Inc summary) (2026-07-08)
+
+Prompt: "Summarize the open tasks in the Beta Inc Renewal list, most
+urgent first." Run from the desktop session (same MCP connection).
+
+Result: 4 of 5 open tasks overdue (call 12d, spike 6d, proposal tipped
+overdue yesterday, feature-log 25d), zero assignees, only the exec deck
+(due Jul 15) healthy. **Numbers exactly match Sentinel Sam's same-day
+run** — independent path, same arithmetic, clean cross-validation.
+
+Same-day radar2 cross-check (run by Josh, 2026-07-08) — two findings:
+
+- **Same Beta verdict (RED, unanimous across all four systems), but
+  radar2's read was DEEPER — and the gap is the finding.** radar2 cited
+  the departed champion and declining usage (evidence: the usage/
+  adoption report task). MCP-Claude's 2-call read saw neither: the
+  usage task is completed (excluded by `filter_tasks`' default) and the
+  champion story lives in task descriptions (omitted from the compact
+  payload; seeing them costs a `get_task` call per task). Phase 1
+  lesson was "an analysis is bounded by its export; the export is a
+  silent filter you wrote." MCP version is sharper: **the model decides
+  its own export boundary fresh every run** — the efficient-looking
+  2-call plan WAS the silent filter, and it isn't written down anywhere
+  auditable. Correct summary, missing story. (Also kills the clean
+  "assignees: MCP sees more than radar2" scoreline from above — each
+  system saw a different slice: radar2 got descriptions+closed tasks
+  but no assignees; MCP got assignees but skipped descriptions. Data
+  position isn't a ranking, it's a Venn diagram.)
+- **radar2 flipped Gamma GREEN → YELLOW with identical code.** Nothing
+  changed but the clock (credential rotation runway: ~10 days at the
+  GREEN run, 5 today). The Phase 1 reproducibility claim needs an
+  asterisk: same inputs → same verdict, but **the date is an input** —
+  verdict = f(data, rubric, clock). This partially vindicates Brain
+  chat's yellow (graded at 6 days runway, between our 10 and 5). The
+  pattern across all runs: every system WITHOUT an empty-risks guard
+  tips yellow somewhere around the one-week cliff; Sentinel Sam
+  ("don't invent problems") is the only one that stayed green next to
+  it — and it still surfaced the item, sized low. Calibration is
+  three-variable: data seen, prompt posture, grading date.
+
+Orchestration observations (the real experiment):
+
+- **Two MCP calls end-to-end:** `get_list` (name→ID), then
+  `filter_tasks` (open tasks, one page). Efficient — no hierarchy
+  sweep, no per-task fetches. Model-orchestration overhead vs radar2's
+  scripted pipeline was ~zero for a read this simple.
+- **The vendor's tool descriptions steered the orchestration.** Planned
+  first call was `get_workspace_hierarchy`; its own description ("use
+  only when you need structure — most tools resolve names
+  automatically") redirected to `get_list`. So there are THREE
+  orchestration authorities, not two: our code (radar2), the model
+  (MCP), and the vendor's tool-description prose quietly shaping what
+  the model does. Tool descriptions are prompt engineering with an
+  install base.
+- **Friction #4 came back defused:** `filter_tasks` excludes closed
+  tasks by default — the same silent filter that bit our raw-API code —
+  but declared in the schema, and correct for this ask.
+- **Dates arrive as epoch milliseconds.** The tool hands the model
+  arithmetic homework (the exact thing radar2 moved into Python).
+  Mitigation used here: delegated conversion to a Python one-liner —
+  an escape hatch Claude Code has and a chat-only MCP host doesn't.
+  Same server, different host, different reliability.
+- **Assignees ARE in the MCP payload** (visible empty arrays) — closes
+  the handoff question. MCP-Claude sees the zero-assignee gap that
+  Brain caught and radar2's assignee-blind export couldn't.
+- **Ranking was model judgment, not tool output:** the API returned
+  date order; putting the 25d-overdue LOW task below the 1d-overdue
+  URGENT one was the model applying priority-over-age reasoning.
+  Defensible — and unversioned, like Sam's invented 14-day threshold.
+
+### Phase 2 verdict — script-orchestrated vs model-orchestrated
+
+The question this phase existed to answer: what changes when the model,
+not your code, decides which API calls happen?
+
+- **Round-trips: model orchestration was CHEAPER than feared.** The
+  reads took 2 calls, the write 2 (+2 for the assignee recovery), the
+  portfolio judgment 5. radar2 makes a similar number of API calls —
+  the difference isn't volume, it's that radar2's sequence is frozen in
+  git and MCP-Claude's is improvised per run.
+- **The export boundary is the real divide.** radar2 fetches a fixed
+  slice (its blind spots are fixed and auditable: no assignees); 
+  MCP-Claude decides its slice fresh each run (missed descriptions in
+  experiment 1, learned, fetched them in experiment 3). Script = static
+  blind spots you can document; model = dynamic blind spots you can't.
+- **Failure behavior inverts.** radar2 hits an API surprise → crashes
+  (or silently mis-reports, friction #4). MCP-Claude hit a broken tool
+  contract ("me" assignee) → recovered unaided in one round-trip.
+  Self-healing is model orchestration's killer feature; determinism is
+  script orchestration's. Pick per use case: pipelines want the crash,
+  assistants want the recovery.
+- **Question flexibility is one-sided.** "Which account needs attention
+  most?" — MCP-Claude and Brain answer natively; radar2's schema has no
+  rank field, so it structurally can't. New questions cost a code
+  change in script-land and a sentence in model-land.
+- **Contract flexibility is one-sided the OTHER way.** radar2's output
+  can't be malformed, feeds dashboards, has error bars only in
+  content (severity jitter), never in shape. MCP-Claude's output is
+  prose unless a human re-imposes structure per prompt.
+- **A third orchestration author emerged: the vendor.** ClickUp's tool
+  descriptions steered call planning ("most tools resolve names
+  automatically"), embedded human-in-the-loop instructions ("always ask
+  the user which list"), and once outright lied ("me" works). In script
+  orchestration the vendor's voice is docs you read once; in model
+  orchestration it's live prompt text inside every loop — a
+  distribution channel for governance AND a new failure surface.
+- **Who orchestrates, really:** radar2 = our code decides, model
+  judges. Brain/Sam = their platform decides, their prompt judges.
+  MCP = the model decides, steered by vendor tool-prose, guarded by
+  host permissions and a human on writes. The interview line: "the
+  divide isn't two-sided, it's a stack — code, model, vendor
+  tool-design, and host permissions all get a vote; architecture is
+  deciding which one gets the veto."
+
+### The Miro comparison (honest paragraph, Josh's read)
+
+The two MCP enablements differed mainly in the on-ramp: Miro arrived
+pre-wired as a claude.ai connector, while ClickUp was initiated from the
+terminal (`claude mcp add` + `/mcp` OAuth) — more setup, but that's
+where the hands-on command-line learning actually happened, so the
+friction was a feature. Both authorizations themselves were simple
+one-click approvals (and both share the same governance thinness: a
+click, not a scope review). The ClickUp testing went materially broader
+than the Miro work ever did — read, write, and judgment experiments
+cross-checked against three other AI systems, plus digging into the
+business drivers behind the server (why a vendor ships MCP at all, and
+how an enterprise would implement automations against it with their own
+agents) rather than just driving the tools. Ergonomically the two felt
+equal — natural-language requests turned into sensible tool calls on
+both sides. Honest caveat: that "equal" verdict rests on limited
+command-line mileage; more reps running MCP work from the terminal are
+needed before the ergonomics judgment means much.
+
 ## Design patterns worth repeating
 
 - **Python does math, the model does judgment.** We pre-compute "overdue by
