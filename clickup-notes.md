@@ -829,6 +829,47 @@ needed before the ergonomics judgment means much.
   colors stable this time. Counts move on every single run; the
   finding holds wherever the code runs.
 
+### Module C — Cloud Scheduler (2026-07-08)
+
+- **First real GCP friction of the phase, and it was a 404 wearing a
+  disguise.** The scheduler's POST failed with nothing but `status:
+  code: 5` in `jobs describe` — a bare gRPC enum (5 = NOT_FOUND), three
+  layers away from the actual bug: Claude's URI pointed at the *global*
+  Cloud Run endpoint (`run.googleapis.com`), but the Jobs admin API
+  lives on *regional* endpoints (`us-central1-run.googleapis.com`).
+  Diagnosis path: describe → decode the enum → question the URI. Two
+  lessons: (1) error surfacing quality matters — ClickUp's API hid
+  errors in the response body (friction #2), GCP hides them behind
+  numeric enums; every platform makes you dig somewhere. (2) The
+  navigator (AI) wrote the wrong URI confidently — same lesson as the
+  MCP "me"-assignee bug from the other side: this time the AI was the
+  one publishing a broken contract, and the human's paste-the-output
+  loop caught it.
+- **Timing bit us twice in one module:** an executions list fired too
+  soon shows nothing (forced runs take seconds to materialize), and the
+  stale `status: code: 5` survives in `describe` output even after the
+  URI fix until the next attempt overwrites it. Cloud state is
+  eventually-consistent everywhere; "wait, then re-read" is a habit,
+  not a workaround.
+- **The RUN BY column is the audit story in one field:** manual run
+  shows `corduroyfields@gmail.com`, scheduled run shows
+  `radar-sweep@...iam.gserviceaccount.com`. Who did what, attributed,
+  for free — the same auditability Sentinel Sam's email trail gave us,
+  platform-side.
+- **The Sentinel Sam comparison, now honest:** ClickUp's Scheduled
+  trigger is ONE toggle. Our equivalent was: enable an API, grant
+  `run.invoker` (job-scoped), write a cron expression, wire an OAuth
+  service-account POST to a regional admin endpoint, and debug a 404.
+  What the button hides is exactly this wiring — and what the wiring
+  buys is everything the button doesn't offer: our schedule triggers
+  OUR container (any code, any model, any output contract), not a
+  prompt inside their walls. Same trade as the whole project: their
+  data position vs our contract, now extended to *their convenience vs
+  our surface area*.
+- Wiring facts for reference: `0 8 * * 1-5` America/New_York; scheduler
+  reuses the `radar-sweep` robot via short-lived OAuth token (no stored
+  key anywhere in the chain).
+
 ### Free calibration data: Gamma's third radar2 verdict (same day!)
 
 The Module A test run re-ran the radar, and Gamma has now produced three
