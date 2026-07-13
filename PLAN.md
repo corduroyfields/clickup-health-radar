@@ -16,12 +16,15 @@ an authentic observation, not when it's polished.
 | 1 | ClickUp-native AI: Brain + Super Agents on the same data | ✅ Complete (Brain + Sentinel Sam agent run on Beta & Gamma; three-system comparison in notes) |
 | 2 | Claude + official ClickUp MCP server; orchestration comparison | ✅ Complete (3 experiments + cross-checks; orchestration verdict + Miro paragraph in notes) |
 | 3 | GCP productionization (Secret Manager, Cloud Run, Scheduler, BigQuery) + final capture/retro | ✅ Complete (all modules A–E + wrap-up; radar runs unattended weekdays 8am ET; GCP kept live for remaining interview stages) |
+| 4 | Front-end over the BigQuery history (post-interview enhancement) | ⬜ Not started — next session MUST begin with the form/function interview in the phase file |
 
 ## Phase files (detailed actions live there)
 
 - `phases/phase-1-clickup-brain.md` — their AI vs. our Radar, head-to-head
 - `phases/phase-2-mcp-orchestration.md` — model-orchestrated vs script-orchestrated
 - `phases/phase-3-gcp-productionize-and-wrap.md` — optional GCP modules + retro
+- `phases/phase-4-frontend.md` — front-end over the radar's BigQuery history
+  (starts with a requirements interview; deep-coaching contract inside)
 
 Each phase file contains: preflight checks for Claude, step-by-step actions
 split "Josh does" / "Claude does", friction to watch for, definition of done,
