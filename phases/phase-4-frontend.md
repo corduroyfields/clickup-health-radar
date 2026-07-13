@@ -49,6 +49,31 @@ let Josh choose. Do not pre-decide the stack. Candidate space to draw from
   that's a deliberate environment constraint — no npm/React toolchains
   unless Josh explicitly opts into installing Node.
 
+## ✅ Spec — decided in the kickoff interview (2026-07-13)
+
+- **Audience:** interviewer watching Josh demo (primary viewer), but the
+  screen is *designed for* a CSM/AE persona doing account health checks.
+  Equal-weight goal: hands-on builder reps for Josh.
+- **Form:** interactive explorer — portfolio overview, click an account
+  to drill in.
+- **Function (priority = build order, stop at friction):**
+  1. Current portfolio at a glance (today's color + risk count per account)
+  2. Trend over time (health across runs — show the jitter story honestly)
+  3. Risk detail with evidence (per-account drill-down)
+  - Cut: "what changed between runs" diff view.
+- **Effort:** learning-first, ~2–3 sessions. No known interview date.
+- **Hosting:** deployed as a Cloud Run *service* with a URL Josh can open
+  in an interview. Read-only service account (the phase's IAM lesson).
+- **Stack:** vanilla HTML/JS frontend + small Python API (FastAPI) — chosen
+  over Streamlit (fewer new concepts; Josh already used it) and Looker
+  Studio (no building = fails the purpose). **Fallback agreed:** if session
+  2 ends without a demoable screen, port the view layer to Streamlit — the
+  API/BigQuery work transfers.
+- **Build sequence (one layer at a time):** API alone first, tested with
+  `curl` → HTML page that fetches it → chart/drill-down → deploy.
+- Glossary queue for /retro: web *service* vs *job*, frontend/backend
+  split, endpoint, JSON API, UI state, chart library, window function.
+
 ## 🎓 Coaching contract for this phase (Claude: hold yourself to it)
 
 Josh asked for DEEP education and coaching this phase. Concretely:

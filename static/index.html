@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ClickUp Health Radar</title>
+  <style>
+    /* CSS = the styling language. Rules read: selector { property: value } */
+    body {
+      font-family: -apple-system, "Segoe UI", sans-serif;
+      max-width: 720px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+      color: #1a1a2e;
+    }
+    h1 { margin-bottom: 0.25rem; }
+    #status { color: #666; margin-top: 0; }
+
+    /* One card per account. The colored left edge is the health verdict. */
+    .card {
+      border: 1px solid #ddd;
+      border-left: 10px solid #999;
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      margin: 0.75rem 0;
+    }
+    /* The JS sets class="card GREEN" etc., so these rules pick the color. */
+    .card.GREEN  { border-left-color: #2e9e44; }
+    .card.YELLOW { border-left-color: #e0a800; }
+    .card.RED    { border-left-color: #d64545; }
+
+    .title { font-weight: 600; }
+    .next  { color: #555; font-size: 0.9rem; margin-bottom: 0; }
+  </style>
+</head>
+<body>
+  <h1>Client Health Radar</h1>
+  <p id="status">Loading…</p>
+  <div id="portfolio"></div>
+
+  <script>
+    // Runs when the page loads: ask our own API for data, then build the
+    // cards. "async/await" = pause here until the network answers, without
+    // freezing the page.
+    async function loadPortfolio() {
+      const response = await fetch("/api/portfolio");   // GET our endpoint
+      const accounts = await response.json();           // parse JSON -> array
+
+      const stamp = new Date(accounts[0].run_time);     // UTC -> local time
+      document.getElementById("status").textContent =
+        "Latest sweep: " + stamp.toLocaleString();
+
+      const container = document.getElementById("portfolio");
+      for (const acc of accounts) {
+        // innerHTML is only ever given OUR OWN fixed skeleton. The values —
+        // which include model-generated text — go in via textContent, which
+        // treats them as plain text. Rule: never innerHTML a string you
+        // didn't write yourself (that's how script injection happens).
+        const card = document.createElement("div");
+        card.className = "card " + acc.health;
+        card.innerHTML = `
+          <div class="title"></div>
+          <p class="justification"></p>
+          <p class="next"></p>`;
+        card.querySelector(".title").textContent =
+          `${acc.client} — ${acc.health} (${acc.risk_count} risk${acc.risk_count === 1 ? "" : "s"})`;
+        card.querySelector(".justification").textContent = acc.justification;
+        card.querySelector(".next").textContent = "Next action: " + acc.next_action;
+        container.appendChild(card);
+      }
+    }
+
+    loadPortfolio();
+  </script>
+</body>
+</html>

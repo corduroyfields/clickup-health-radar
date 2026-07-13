@@ -1110,6 +1110,35 @@ skepticism is the correct posture for stages they haven't verified yet.
 - **Vertex (`vertexai=True`) over a raw API key:** auth rides on ADC, usage
   bills to the project, nothing secret in the code — the enterprise pattern.
 
+## Phase 4 — the front-end
+
+- **The front-end's first catch was our own pipeline, not a client.**
+  While reading the history table to build the portfolio view, Friday's
+  Gamma `GREEN (3 risks)` looked like pre-Module-E padding — and it was.
+  Cloud Build history vs git log proved the job was last deployed 84
+  minutes BEFORE the Module E commit: the empty-risks lever was measured
+  locally (SQL receipts and all) and never shipped. Every scheduled run
+  since 7/09 executed the old prompt. Lessons: (1) a deploy is a
+  snapshot, not a subscription — "fixed" and "shipped" are separate
+  states, and nothing warns you they've diverged (this gap is what CI/CD
+  exists to close); (2) a dashboard is also a monitoring tool pointed at
+  your own pipeline — the discrepancy was invisible in logs and obvious
+  in the data.
+- **gcloud fails silent when you ask a wrong question.** Twice in five
+  minutes: a nonexistent field in `--format="value(...)"` printed
+  nothing (no "unknown field" error), and `gcloud builds list` defaulted
+  to the GLOBAL region while our builds live in us-central1 — empty
+  list, no hint. Same genus as Module C's regional-endpoint 404: GCP is
+  regional to its bones, and silence usually means wrong-question, not
+  no-answer. Treat a blank response to a must-have-an-answer question as
+  a bug in the question.
+- **Fail-fast bit us constructively.** Adding `StaticFiles` to the API
+  before the `static/` folder existed crashed the dev server at startup
+  (the library validates at boot rather than 404ing at request time) —
+  and `--reload` only watches .py files, so creating the folder didn't
+  revive it. Two-step changes need to be valid at every intermediate
+  step when a reloader is acting on every save.
+
 ## Explored (originally "Still to explore" — every item landed)
 - ~~Structured JSON output via Gemini response schema~~ → radar2, and it
   became the BigQuery DDL.
