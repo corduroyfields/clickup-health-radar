@@ -141,6 +141,68 @@ a short spec at the top of this phase's work, built to friction, observed
 honestly in `clickup-notes.md`, committed. Plus the phase-end ritual
 (handoff below, PLAN.md row, notes, commit).
 
+## 📌 Session 1 handoff (2026-07-13) — next session starts here
+
+**Kickoff ritual: DONE.** The requirements interview happened; the spec is
+the ✅ section above. Do NOT re-interview — pick up the build.
+
+### State of the build
+- **Function 1 of 3 (portfolio at a glance): WORKING locally.**
+  - `api.py` — FastAPI service: `/api/portfolio` (latest row per client via
+    a `QUALIFY ROW_NUMBER()` window function) + serves `static/` (mounted
+    last so API routes win; `html=True` maps `/` → index.html).
+  - `static/index.html` — single-file frontend: fetch → JSON → DOM cards;
+    health color via CSS classes (`card GREEN` etc.); model text inserted
+    with `textContent` only (injection-safety rule is commented in the file).
+  - Run: `uv run uvicorn api:app --reload --port 8000` → open
+    `http://localhost:8000/` (must be http://, not file://).
+  - Deps added to pyproject/uv.lock: `fastapi`, `uvicorn`.
+- **Production event (session's big find):** the Module E empty-risks lever
+  had NEVER been deployed — Cloud Build history (last build 7/09 08:23 CDT)
+  predated the Module E commit (09:47 CDT). Fixed 7/13: committed, redeployed
+  (`gcloud run jobs deploy radar-sweep --source . --region us-central1`),
+  manual execution verified — Gamma now YELLOW(1), honest, padding gone.
+  Full write-up in `clickup-notes.md` → "Phase 4 — the front-end".
+- **Trial status:** ClickUp trial still ALIVE as of 7/13; scheduled sweeps
+  landing weekdays ~12:03 UTC. The expected-401 epilogue hasn't started.
+- **Known impurity (accepted):** the job image now also contains
+  api.py/static/fastapi/uvicorn (`--source .` ships everything). Harmless;
+  revisit only when creating the separate front-end service deploy.
+
+### Next up (in spec priority order)
+1. **Function 2 — trend over time.** Plan: `/api/history` endpoint (all runs
+   per client), then the phase's first chart. DESIGN CHOICE to present to
+   Josh BEFORE code (coaching contract): hand-rolled SVG chart (max
+   learning, zero deps) vs a vendored single-file chart library (e.g.
+   Chart.js copied into static/ — industry-normal, faster; NO CDN <script>
+   so the demo works offline, and still no Node needed either way). Tell
+   the jitter/boundary story honestly (per-run dots, not smoothed lines).
+2. **Function 3 — risk drill-down.** Click a card → account detail with
+   per-risk summary/severity/evidence. Needs the `risks` JSON column
+   (JSON-typed in BQ — parsing it API-side is a small lesson itself).
+   This is where UI **state** (which account is selected) gets taught.
+3. **Deploy as a Cloud Run *service*** — the phase's IAM lesson: new
+   service account with read-only BigQuery roles (dataViewer + jobUser
+   scope discussion), NOT reusing the radar-sweep robot (it has
+   dataEditor). Cost statement before enabling anything new.
+4. Optional polish, only if it earns it: favicon, empty-state handling
+   (what the page shows if BQ has no rows / trial dies).
+
+### Terms taught this session (queue for /retro glossary)
+web service vs job · FastAPI · uvicorn · endpoint · JSON · frontend/backend
+split · DOM · fetch + async/await · textContent vs innerHTML (injection) ·
+CSS class-driven styling · window function / QUALIFY · fail-fast · CORS
+(defined, avoided via same-origin) · favicon · ISO 8601 timestamps ·
+deploy-as-snapshot vs CI/CD · gcloud silent-empty (wrong field / wrong
+region) · localhost/port · Connection refused.
+
+### Working-agreement reminders that mattered
+- Josh runs every command and pastes output; the paste-loop caught two
+  silent-empties and a dead reloader this session. Keep it.
+- Present design choices with the rejected alternative BEFORE code.
+- Build to friction: portfolio view is deliberately unpolished; function 2
+  before any beautification.
+
 ## Handoff (fill in at phase end)
 - Key learnings:
 - Decisions made:

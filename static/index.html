@@ -31,12 +31,49 @@
 
     .title { font-weight: 600; }
     .next  { color: #555; font-size: 0.9rem; margin-bottom: 0; }
+
+    h2 { margin-top: 2rem; margin-bottom: 0.25rem; }
+    .hint { color: #666; font-size: 0.85rem; margin-top: 0; }
+    .trend-client { font-weight: 600; margin: 1rem 0 0.25rem; }
+
+    /* Drill-down: cards are clickable; detail expands inside the card. */
+    .card { cursor: pointer; }
+    .detail {
+      border-top: 1px solid #eee;
+      margin-top: 0.75rem;
+      padding-top: 0.5rem;
+      cursor: default;
+    }
+    .risk { margin: 0.5rem 0; }
+    .sev {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+      color: #fff;
+      background: #999;
+      vertical-align: middle;
+    }
+    .sev-high   { background: #d64545; }
+    .sev-medium { background: #e0a800; }
+    .sev-low    { background: #7a9a7e; }
+    .evidence { color: #666; font-size: 0.85rem; margin-top: 0.15rem; }
   </style>
 </head>
 <body>
   <h1>Client Health Radar</h1>
   <p id="status">Loading…</p>
+  <p class="hint">Click a card for this run's risks and evidence.</p>
   <div id="portfolio"></div>
+
+  <h2>Health trend</h2>
+  <p class="hint">
+    One dot per radar run, evenly spaced — deliberately not a smoothed
+    line. Same-day dots that disagree are the model changing its mind at
+    a rubric boundary; that jitter is real and worth seeing.
+    Hover a dot for the exact run.
+  </p>
+  <div id="trends"></div>
 
   <script>
     // Runs when the page loads: ask our own API for data, then build the
@@ -66,11 +103,158 @@
           `${acc.client} — ${acc.health} (${acc.risk_count} risk${acc.risk_count === 1 ? "" : "s"})`;
         card.querySelector(".justification").textContent = acc.justification;
         card.querySelector(".next").textContent = "Next action: " + acc.next_action;
+        // An event listener: "when this element is clicked, run this
+        // function." The UI doing nothing until the user acts — that's
+        // the behavior layer earning its name.
+        card.addEventListener("click", () => toggleDetail(card, acc.client));
         container.appendChild(card);
       }
     }
 
+    // ---- Drill-down (function #3) ---------------------------------------
+    // STATE: what the UI remembers beyond the data itself. Here it's one
+    // fact — "which card is expanded?" — and we store it in the simplest
+    // possible place: the presence or absence of a .detail element in the
+    // DOM. (Bigger apps keep state in variables and re-render from it;
+    // at one fact, the DOM itself is an honest filing cabinet.)
+    async function toggleDetail(card, client) {
+      const existing = card.querySelector(".detail");
+      if (existing) {           // open -> clicking again closes it
+        existing.remove();
+        return;
+      }
+      // One-at-a-time rule: close any other card's detail first.
+      document.querySelectorAll(".detail").forEach((d) => d.remove());
+
+      const detail = document.createElement("div");
+      detail.className = "detail";
+      detail.textContent = "Loading risks…";
+      card.appendChild(detail);
+
+      // encodeURIComponent is the %20 dance done for us — spaces and
+      // other URL-hostile characters get escaped before travel.
+      const response = await fetch("/api/account/" + encodeURIComponent(client));
+      if (!response.ok) {       // the status-code contract, consumed
+        detail.textContent = `Couldn't load detail (HTTP ${response.status})`;
+        return;
+      }
+      const report = await response.json();
+
+      detail.textContent = "";
+      if (report.risks.length === 0) {
+        const clean = document.createElement("p");
+        clean.textContent = "No risks this run — a clean, honest empty list.";
+        detail.appendChild(clean);
+        return;
+      }
+      for (const risk of report.risks) {
+        const row = document.createElement("div");
+        row.className = "risk";
+        row.innerHTML = `
+          <span class="sev"></span>
+          <span class="summary"></span>
+          <div class="evidence"></div>`;
+        const sev = row.querySelector(".sev");
+        sev.textContent = risk.severity.toUpperCase();
+        sev.classList.add("sev-" + risk.severity.toLowerCase());
+        row.querySelector(".summary").textContent = " " + risk.summary;
+        row.querySelector(".evidence").textContent =
+          "Evidence: " + risk.evidence_tasks.join(" · ");
+        detail.appendChild(row);
+      }
+    }
+
+    // ---- Trend chart (hand-rolled SVG) ----------------------------------
+    // SVG has its own coordinate system: x grows rightward, y grows DOWN
+    // (0,0 is the top-left corner). Each health verdict gets a horizontal
+    // band; each run becomes a dot at (run's slot, its verdict's band).
+    const HEALTH_Y     = { GREEN: 20, YELLOW: 45, RED: 70 };
+    const HEALTH_COLOR = { GREEN: "#2e9e44", YELLOW: "#e0a800", RED: "#d64545" };
+
+    // Gotcha worth memorizing: SVG elements must be created in the SVG
+    // *namespace*. document.createElement("circle") silently makes a dead
+    // element that renders nothing — createElementNS is required.
+    const SVG_NS = "http://www.w3.org/2000/svg";
+    function svgEl(tag, attrs) {
+      const el = document.createElementNS(SVG_NS, tag);
+      for (const [name, value] of Object.entries(attrs)) {
+        el.setAttribute(name, value);
+      }
+      return el;
+    }
+
+    async function loadTrends() {
+      const response = await fetch("/api/history");
+      const history = await response.json();   // { client: [runs...] }
+      const container = document.getElementById("trends");
+
+      // One small chart per client ("small multiples") so clients' dots
+      // never overlap each other.
+      for (const [client, runs] of Object.entries(history)) {
+        const heading = document.createElement("div");
+        heading.className = "trend-client";
+        heading.textContent = client;
+        container.appendChild(heading);
+
+        const width = 640, height = 100, leftPad = 70, rightPad = 20;
+        // viewBox defines the drawing's own coordinate space; width:100%
+        // lets the browser scale it to fit — that's the "V" in SVG.
+        const svg = svgEl("svg", { viewBox: `0 0 ${width} ${height}`, width: "100%" });
+
+        // Band labels + faint guide lines.
+        for (const [health, y] of Object.entries(HEALTH_Y)) {
+          const label = svgEl("text", {
+            x: 0, y: y + 4, "font-size": 11, fill: HEALTH_COLOR[health],
+          });
+          label.textContent = health;
+          svg.appendChild(label);
+          svg.appendChild(svgEl("line", {
+            x1: leftPad - 10, y1: y, x2: width - rightPad, y2: y, stroke: "#eee",
+          }));
+        }
+
+        // The mapping data -> position: run #i sits at slot i, evenly
+        // spaced. (A true time axis was rejected: our same-day runs would
+        // collapse into one unreadable blob, hiding the jitter story.)
+        const step = runs.length > 1
+          ? (width - leftPad - rightPad) / (runs.length - 1) : 0;
+        const xOf = (i) => leftPad + i * step;
+
+        // Thin gray line = reading order, NOT a trend claim.
+        const points = runs.map((r, i) => `${xOf(i)},${HEALTH_Y[r.health]}`).join(" ");
+        svg.appendChild(svgEl("polyline", { points, fill: "none", stroke: "#ccc" }));
+
+        runs.forEach((run, i) => {
+          const dot = svgEl("circle", {
+            cx: xOf(i), cy: HEALTH_Y[run.health], r: 6, fill: HEALTH_COLOR[run.health],
+          });
+          // A <title> child inside an SVG shape = free native hover tooltip.
+          const tip = svgEl("title", {});
+          tip.textContent = `${new Date(run.run_time).toLocaleString()} — ` +
+            `${run.health}, ${run.risk_count} risk${run.risk_count === 1 ? "" : "s"}`;
+          dot.appendChild(tip);
+          svg.appendChild(dot);
+
+          // Date label under the first run of each calendar day.
+          const day = new Date(run.run_time).toLocaleDateString();
+          const prevDay = i > 0 ? new Date(runs[i - 1].run_time).toLocaleDateString() : null;
+          if (day !== prevDay) {
+            const dateLabel = svgEl("text", {
+              x: xOf(i), y: height - 6, "font-size": 10,
+              fill: "#888", "text-anchor": "middle",
+            });
+            dateLabel.textContent = new Date(run.run_time).toLocaleDateString(
+              undefined, { month: "numeric", day: "numeric" });
+            svg.appendChild(dateLabel);
+          }
+        });
+
+        container.appendChild(svg);
+      }
+    }
+
     loadPortfolio();
+    loadTrends();
   </script>
 </body>
 </html>

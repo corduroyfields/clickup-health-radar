@@ -1138,6 +1138,17 @@ skepticism is the correct posture for stages they haven't verified yet.
   and `--reload` only watches .py files, so creating the folder didn't
   revive it. Two-step changes need to be valid at every intermediate
   step when a reloader is acting on every save.
+- **Chart design turned out to be risk communication, not decoration.**
+  Three choices in the trend chart were all honesty decisions: one dot
+  per run instead of a smoothed line (a line manufactures confidence the
+  data doesn't have); runs evenly spaced instead of a true time axis
+  (time-scaling collapses the July-9 same-day cluster — the jitter
+  exhibit itself — into a blob); the connecting line styled faint gray
+  and documented as "reading order, not a trend claim." A dashboard
+  that smooths, aggregates, or shows only the latest color would tell a
+  cleaner and less true story from the identical table. Whoever builds
+  the front-end chooses what the stakeholder believes about the AI's
+  reliability — the error bars only exist if someone draws them.
 
 ## Explored (originally "Still to explore" — every item landed)
 - ~~Structured JSON output via Gemini response schema~~ → radar2, and it
