@@ -101,6 +101,36 @@ being graded against.
   compose content, not just actions), and the last mile (the radar
   says "call the champion"; it can't call the champion).
 
+## Phase 4 addendum — the front-end (built after stage 1)
+
+An interactive explorer over the radar's BigQuery history, built by hand
+with no frameworks: a FastAPI endpoint layer + vanilla HTML/JS/SVG.
+Portfolio at a glance, per-run trend dots, click-to-expand risk detail
+with cited evidence. Runs locally; demo takes one command. New talking
+points it earned:
+
+- **My dashboard's first catch was my own pipeline.** The prompt fix we
+  had measured with an A/B (and celebrated) had never actually been
+  redeployed — the cloud job ran the old prompt for four days. Logs
+  showed nothing; *looking at the data* caught it in minutes. Lesson:
+  a deploy is a snapshot, not a subscription — "fixed" and "shipped"
+  are different states, and the gap between them is what CI/CD exists
+  to close.
+- **Chart design is risk communication.** One dot per run instead of a
+  smoothed trend line; same-day disagreements left visible. The same
+  table can tell a cleaner, less true story — the AI's error bars only
+  exist if someone chooses to draw them. Whoever builds the dashboard
+  decides what stakeholders believe about the AI's reliability.
+- **Decoupling paid off as designed:** the explorer reads accumulated
+  warehouse history, not ClickUp live — it keeps working even after the
+  trial expires and the upstream agent starts failing.
+- **The ending is a deliberate scope cut.** When the final interview
+  landed, the remaining step (cloud-deploying the front-end) was cut:
+  its value was learning, not demo, and the deadline that mattered was
+  human. Shipping the three functions with demo value and documenting
+  the cut honestly *is* the build-to-friction method, applied to
+  the project itself.
+
 ## The 60-second answer: "Tell me about your AI agent experience"
 
 High-level version (the default):

@@ -1149,6 +1149,15 @@ skepticism is the correct posture for stages they haven't verified yet.
   cleaner and less true story from the identical table. Whoever builds
   the front-end chooses what the stakeholder believes about the AI's
   reliability — the error bars only exist if someone draws them.
+- **Closing: the scope cut is the last exhibit.** Josh reached the final
+  ClickUp interview round mid-phase, so the remaining step (deploying the
+  explorer as a Cloud Run service — a learning-value item, not a
+  demo-value item) was cut and documented rather than finished. That is
+  the project's own method applied to the project: build to friction,
+  and stop when the next unit of work no longer serves the actual goal.
+  The loop the project set out to close is closed — ClickUp data →
+  AI judgment → warehoused history → a human-readable surface — and the
+  last mile was always going to be human anyway.
 
 ## Explored (originally "Still to explore" — every item landed)
 - ~~Structured JSON output via Gemini response schema~~ → radar2, and it

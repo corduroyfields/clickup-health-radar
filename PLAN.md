@@ -16,7 +16,7 @@ an authentic observation, not when it's polished.
 | 1 | ClickUp-native AI: Brain + Super Agents on the same data | ✅ Complete (Brain + Sentinel Sam agent run on Beta & Gamma; three-system comparison in notes) |
 | 2 | Claude + official ClickUp MCP server; orchestration comparison | ✅ Complete (3 experiments + cross-checks; orchestration verdict + Miro paragraph in notes) |
 | 3 | GCP productionization (Secret Manager, Cloud Run, Scheduler, BigQuery) + final capture/retro | ✅ Complete (all modules A–E + wrap-up; radar runs unattended weekdays 8am ET; GCP kept live for remaining interview stages) |
-| 4 | Front-end over the BigQuery history (post-interview enhancement) | 🟨 In progress — interview done, spec in phase file; function 1 of 3 (portfolio view) working locally; stale-deploy bug found via the data and fixed. Next: trend chart |
+| 4 | Front-end over the BigQuery history (post-interview enhancement) | ✅ Complete (3/3 functions working locally: portfolio, trend, drill-down; Cloud-Run-service deploy deliberately cut at final-interview news — rationale + teardown checklist in phase file) |
 
 ## Phase files (detailed actions live there)
 

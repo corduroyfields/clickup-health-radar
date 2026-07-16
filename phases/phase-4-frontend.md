@@ -203,7 +203,57 @@ region) · localhost/port · Connection refused.
 - Build to friction: portfolio view is deliberately unpolished; function 2
   before any beautification.
 
-## Handoff (fill in at phase end)
-- Key learnings:
-- Decisions made:
-- Open questions:
+## Post-interview teardown checklist (do AFTER the final interview)
+
+Keep the radar running until then — pennies/day, and the trend chart
+grows a dot each weekday, which makes the demo better. Before interview
+day: take two screenshots of the explorer (portfolio+trend, and an open
+drill-down) into the repo as demo insurance. Afterwards, in order:
+
+1. See what's running: `gcloud scheduler jobs list --location us-central1`
+   then pause it: `gcloud scheduler jobs pause <name> --location us-central1`
+   (pause is reversible; delete when sure).
+2. Optional: keep the BigQuery history (it's the project's data artifact,
+   costs ~nothing at rest) or export first:
+   `bq extract radar.health_reports gs://...` / or just query → screenshot.
+3. Full teardown when done demoing forever:
+   `gcloud projects delete clickup-health-radar` (nuclear — removes job,
+   scheduler, secret, BigQuery, billing exposure, everything).
+4. ClickUp trial will expire on its own; nothing to clean there beyond
+   screenshots you want to keep.
+
+## Handoff (phase closed 2026-07-16)
+
+- **Key learnings:** the frontend/backend split built by hand (FastAPI
+  endpoints + vanilla JS consuming them); the DOM as the live tree the
+  screen is painted from; SVG coordinate math (what every chart library
+  hides); "data must never become code" on both sides of the stack
+  (textContent vs innerHTML; SQL query parameters vs f-strings); HTTP
+  status codes as contract; deploy-is-a-snapshot — the Module E fix had
+  never shipped, and the front-end's first catch was our own pipeline;
+  gcloud fails silent on wrong-question (bad field name, wrong region);
+  chart design is risk communication (dots not lines, error bars only
+  exist if drawn).
+- **Decisions made:** vanilla+FastAPI over Streamlit/Looker (learning-
+  first; Streamlit fallback agreed but never needed); JSON grouped
+  server-side for its consumer; hand-rolled SVG with evenly-spaced runs
+  (time axis rejected — it hides the jitter cluster); drill-down state
+  kept as DOM presence (one fact, simplest store); **the Cloud Run
+  service deploy was deliberately CUT on 2026-07-16** when Josh reached
+  the final ClickUp interview round — its value was learning (read-only
+  service account, IAM), not demo; the explorer demos perfectly locally
+  (`uv run uvicorn api:app --reload --port 8000` → http://localhost:8000).
+  What the deploy would have been, for the record: a second service
+  account with `roles/bigquery.dataViewer` + `roles/bigquery.jobUser`
+  (NOT the radar-sweep robot — it has dataEditor), a service Dockerfile
+  running uvicorn, `gcloud run deploy` (service, not job), and a public-
+  vs-authenticated URL decision.
+- **Open questions:** none blocking. Parked, not owed: the deploy above;
+  event-bubbling quirk (clicking detail text closes the card —
+  documented, one-line fix if ever wanted); favicon/polish; empty-state
+  handling for when the trial dies.
+
+Phase verdict: 3 of 3 spec functions built, working, and demoable
+locally; every one produced authentic observations (see clickup-notes.md
+"Phase 4"); the phase ended the way the whole project worked — build to
+friction, stop when the next step no longer serves the goal.
