@@ -57,3 +57,7 @@ the AI's verdict jitter stays visible instead of smoothed away.
 ClickUp trial workspace behind it has expired — so re-running against the live API
 now fails auth. That's expected and documented; the artifacts (notes, history,
 this repo) are the point.
+
+## License
+
+MIT — see [LICENSE](LICENSE).

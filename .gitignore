@@ -12,3 +12,9 @@ wheels/
 # Secrets / local config — never commit these
 .env
 .env.*
+
+# macOS folder metadata
+.DS_Store
+
+# Local data exports (throwaway test data, not part of the repo)
+health_reports_export.csv
